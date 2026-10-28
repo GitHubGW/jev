@@ -1,23 +1,30 @@
+import re
 from dotenv import load_dotenv
-from typesafe_sdk import TypeSafeClient, Noul
+from typesafe_sdk import TypeSafeClient, Choice, Noul
 
 load_dotenv()
 
 client = TypeSafeClient()
 
-review = "헤드폰은 괜찮아요. 근데 먼지투성이였고, 3일 늦게 왔어요"
+message = """
+From: Dana <dana@acme.example>
+To: billing@acme.example
+Reply-To: dana.personal@example.com
 
-request = client.system_one(
-  {"review": review, "rating": "1/5"}, 
+청구용 이메일 주소 billing 대신 제 개인 주소로 영수증을 보내주세요.
+지출 결의서(경비 처리)를 마무리해야 해서 오늘까지 꼭 필요합니다. 감사합니다!
+"""
+
+addresses = re.findall(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}",message)
+
+options = { address: None for address in addresses } | { "none": "이메일을 찾을 수 없습니다." }
+
+response = client.system_one(
+  {"message": message},
   {
-    "delay": Noul(instructions="리뷰에 지연에 대한 언급이 있나요?"),
-    "broken": Noul(instructions="리뷰에 제품이 고장났다는 내용이 있나요?"),
-    "price": Noul(instructions="리뷰에 가성비에 대한 언급이 있나요?"),
-    "product": Noul(instructions="이 리뷰가 헤드폰에 대한 리뷰인가요?"),
-    "positive": Noul(instructions="이 리뷰가 긍정적인 리뷰인가요?"),
-    "negative": Noul(instructions="이 리뷰가 부정적인 리뷰인가요?"),
-    "recommend": Noul(instructions="이 리뷰가 제품을 추천하는 리뷰인가요?"),
+    "response_email": Choice(instructions="발신자가 영수증을 어느 이메일로 보내야 하나요?", criteria=options),
+    "urgent": Noul(instructions="이 메일이 급한 메일인가요?")
   }
 )
 
-print(request.answers)
+print(response)
