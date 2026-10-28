@@ -1,6 +1,5 @@
-import re
 from dotenv import load_dotenv
-from typesafe_sdk import TypeSafeClient, Choice, Noul
+from typesafe_sdk import TypeSafeClient, Score
 
 load_dotenv()
 
@@ -15,16 +14,14 @@ Reply-To: dana.personal@example.com
 지출 결의서(경비 처리)를 마무리해야 해서 오늘까지 꼭 필요합니다. 감사합니다!
 """
 
-addresses = re.findall(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}",message)
-
-options = { address: None for address in addresses } | { "none": "이메일을 찾을 수 없습니다." }
-
 response = client.system_one(
   {"message": message},
   {
-    "response_email": Choice(instructions="발신자가 영수증을 어느 이메일로 보내야 하나요?", criteria=options),
-    "urgent": Noul(instructions="이 메일이 급한 메일인가요?")
+    "urgency_level": Score(
+      instructions="발신자의 요청이 마감일 기준으로 얼마나 긴급한가요?",
+      criteria=["급한 메일", "보통 메일", "급하지 않은 메일"]
+    )
   }
 )
 
-print(response)
+print(response.answers["urgency_level"])
