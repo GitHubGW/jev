@@ -5,26 +5,44 @@ load_dotenv()
 
 client = TypeSafeClient()
 
-paragraphs = {
-  "P1": "배송일로부터 30일 이내에 사용하지 않은 제품은 반품하실 수 있습니다.",
-  "P2": "환불은 영업일 기준 5일 이내에 원래 결제 수단으로 지급됩니다.",
-  "P3": "일반 배송은 영업일 기준 3~5일이 소요됩니다.",
-  "P4": "제품이 파손되어 도착한 경우, 교환을 위해 사진을 첨부하여 고객센터로 문의해 주세요.",
+state = {
+    "student": {
+        "experience": "Python의 변수, 반복문, 함수는 알고 있지만, 웹 API를 만들어본 적은 없습니다.",
+        "projects": [
+            {"goal": "내 모바일 앱이 학습 기록을 저장하고 조회할 수 있는 Python API 구축하기"},
+            {"goal": "나중에 개인 포트폴리오 웹사이트 만들기"},
+        ],
+    },
 }
 
-question = "해외 배송도 가능한가요?"
 
-criteria = {}
-
-for paragraph_id in paragraphs:
-  criteria[paragraph_id] = None
-
-
-response = client.system_one(paragraphs, {
-  "answer": Choice(instructions=f"어느 것이 다음 질문에 답하고 있나요?: {question}", criteria=criteria),
-  "exists": Noul(instructions=f"다음 질문에 답할 수 있는 답을 가지고 있는 내용이 있나요?: {question}", 
-  criteria=NoulCriteria(true="paragraphs에서 답을 직접 명시하거나 답을 암시함", false="paragraphs에서 답을 직접 명시하거나 답을 암시하지 않음"))
+response = client.system_one(state, {
+  "recommendation": Choice(
+  instructions={
+    "question": "어떤 학습 주제가 가장 적합한가요? `student.projects[0].goal`",
+    "context": "`student.experience`를 참고하세요"
+  },
+  criteria={
+    "frontend": {
+        "topics": ["HTML", "CSS", "browser interfaces"],
+        "prerequisites": "No previous web development required.",
+        "project_example": "A personal portfolio website.",
+    },
+    "python_api": {
+        "topics": ["HTTP", "Python API routes", "database storage"],
+        "prerequisites": "Basic Python, variables, loops, and functions.",
+        "project_example": "A backend that stores data for a mobile app.",
+    },
+    "data_analysis": {
+        "topics": ["CSV files", "dataframes", "charts"],
+        "prerequisites": "Basic Python.",
+        "project_example": "Analyze workout history from a spreadsheet.",
+    },
+    "none": {
+        "description": "None of the listed topics fits the current project."
+    },
+  }
+  )
 })
-
 
 print(response)
