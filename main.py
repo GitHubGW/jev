@@ -1,48 +1,31 @@
 from dotenv import load_dotenv
-from typesafe_sdk import Choice, Noul, NoulCriteria, TypeSafeClient, Score
+from typesafe_sdk import Noul, NoulAnswer, ScoreAnswer, TypeSafeClient, Score, SystemOneResponse
 
 load_dotenv()
 
 client = TypeSafeClient()
 
-state = {
-    "student": {
-        "experience": "Python의 변수, 반복문, 함수는 알고 있지만, 웹 API를 만들어본 적은 없습니다.",
-        "projects": [
-            {"goal": "내 모바일 앱이 학습 기록을 저장하고 조회할 수 있는 Python API 구축하기"},
-            {"goal": "나중에 개인 포트폴리오 웹사이트 만들기"},
-        ],
-    },
-}
+bug = ("페이지에 둥근 모서리가 있어요. 환불 받을 수 있을까요?",)
 
+class BugResponse(SystemOneResponse):
+  severity: ScoreAnswer
+  urgent: NoulAnswer
 
-response = client.system_one(state, {
-  "recommendation": Choice(
-  instructions={
-    "question": "어떤 학습 주제가 가장 적합한가요? `student.projects[0].goal`",
-    "context": "`student.experience`를 참고하세요"
+response = client.system_one(
+  {"report": bug},
+  {
+    "severity": Score(
+    instructions="보고된 문제가 얼마나 심각한가요? 해결 방법이 있을까요?", 
+    criteria=[
+      "외관상 문제지만, 사용자들은 평소처럼 업무를 완료할 수 있는 큰 문제는 아닙니다.",
+      "기능 하나가 고장났지만 사용자는 우회 방법으로 목표를 완료할 수 있습니다.",
+      "사용자는 우회할 수 없고, 업무를 완료할 수 없는 심각한 문제입니다."
+    ]
+    ),
+    "urgent": Noul(instructions="이 문제는 얼마나 급한가요? 해결 방법이 있을까요?")
   },
-  criteria={
-    "frontend": {
-        "topics": ["HTML", "CSS", "browser interfaces"],
-        "prerequisites": "No previous web development required.",
-        "project_example": "A personal portfolio website.",
-    },
-    "python_api": {
-        "topics": ["HTTP", "Python API routes", "database storage"],
-        "prerequisites": "Basic Python, variables, loops, and functions.",
-        "project_example": "A backend that stores data for a mobile app.",
-    },
-    "data_analysis": {
-        "topics": ["CSV files", "dataframes", "charts"],
-        "prerequisites": "Basic Python.",
-        "project_example": "Analyze workout history from a spreadsheet.",
-    },
-    "none": {
-        "description": "None of the listed topics fits the current project."
-    },
-  }
-  )
-})
+  response_model=BugResponse
+)
 
-print(response)
+print(response.severity)
+
